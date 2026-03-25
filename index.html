@@ -1,75 +1,93 @@
 <!DOCTYPE html>
 <html lang="vi">
-
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Zalo to Supabase</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Zalo Sync - Tài Huỳnh</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        body {
-            font-family: sans-serif;
-            padding: 20px;
-            background: #f4f4f9;
+        body { font-family: -apple-system, sans-serif; padding: 20px; background: #f0f2f5; margin: 0; }
+        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h3 { margin-top: 0; color: #1c1e21; text-align: center; }
+        textarea { 
+            width: 100%; height: 200px; border-radius: 10px; border: 1px solid #ddd; 
+            padding: 12px; font-size: 16px; box-sizing: border-box; resize: none;
+            margin-bottom: 15px; outline: none;
         }
-
-        textarea {
-            width: 100%;
-            height: 150px;
-            border-radius: 8px;
-            border: 1px solid #ccc;
-            padding: 10px;
-            font-size: 16px;
+        textarea:focus { border-color: #007bff; }
+        button { 
+            width: 100%; padding: 16px; background: #007bff; color: white; border: none; 
+            border-radius: 10px; font-size: 18px; font-weight: bold; cursor: pointer;
+            transition: background 0.3s;
         }
-
-        button {
-            width: 100%;
-            padding: 15px;
-            background: #007bff;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            margin-top: 10px;
-            font-size: 18px;
-            font-weight: bold;
+        button:disabled { background: #ccc; }
+        #status { 
+            margin-top: 15px; padding: 10px; border-radius: 8px; text-align: center; 
+            font-weight: bold; display: none;
         }
-
-        .status {
-            margin-top: 10px;
-            text-align: center;
-            color: #28a745;
-            display: none;
-        }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
     </style>
 </head>
-
 <body>
-    <h3>📥 Nạp dữ liệu Zalo</h3>
-    <textarea id="content" placeholder="Dán nội dung từ Zalo vào đây..."></textarea>
-    <button onclick="saveData()">LƯU VĨNH VIỄN</button>
-    <div id="status" class="status">Đã lưu thành công! ✅</div>
+    <div class="card">
+        <h3>📥 Zalo to Database</h3>
+        <textarea id="content" placeholder="Dán nội dung Zalo vào đây..."></textarea>
+        <button id="btnSave" onclick="saveData()">LƯU VĨNH VIỄN</button>
+        <div id="status"></div>
+    </div>
 
     <script>
         const _URL = "https://lcnjmtdccbvnqsitfvxs.supabase.co";
         const _KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxjbmptdGRjY2J2bnFzaXRmdnhzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0MjkxMjIsImV4cCI6MjA5MDAwNTEyMn0.ygzImhpaSgS6T67th_jXDcf8bMaG6yNZnwll8JCPflE";
-        const supabase = supabase.createClient(_URL, _KEY);
+        
+        // Khởi tạo Supabase đúng cách
+        const supabaseClient = supabase.createClient(_URL, _KEY);
 
         async function saveData() {
-            const text = document.getElementById('content').value;
-            if (!text) return;
+            const textArea = document.getElementById('content');
+            const btn = document.getElementById('btnSave');
+            const statusDiv = document.getElementById('status');
+            const text = textArea.value.trim();
 
-            const { error } = await supabase.from('agent_logs').insert([{
-                project_name: "Zalo_Mobile_Inbox",
-                payload: { raw_content: text, source: "Mobile" }
-            }]);
-
-            if (!error) {
-                document.getElementById('status').style.display = 'block';
-                document.getElementById('content').value = '';
-                setTimeout(() => { document.getElementById('status').style.display = 'none'; }, 3000);
+            if(!text) {
+                showStatus("Vui lòng nhập nội dung!", "error");
+                return;
             }
+
+            // Trạng thái đang xử lý
+            btn.disabled = true;
+            btn.innerText = "Đang lưu...";
+
+            try {
+                const { error } = await supabaseClient.from('agent_logs').insert([{ 
+                    project_name: "Zalo_Mobile_Inbox", 
+                    payload: { 
+                        raw_content: text, 
+                        source: "Mobile_PWA",
+                        timestamp: new Date().toISOString()
+                    } 
+                }]);
+
+                if(error) throw error;
+
+                showStatus("Đã lưu thành công! ✅", "success");
+                textArea.value = ''; // Xóa nội dung sau khi lưu
+            } catch (err) {
+                showStatus("Lỗi: " + err.message, "error");
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "LƯU VĨNH VIỄN";
+            }
+        }
+
+        function showStatus(msg, type) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerText = msg;
+            statusDiv.className = type;
+            statusDiv.style.display = 'block';
+            setTimeout(() => { statusDiv.style.display = 'none'; }, 4000);
         }
     </script>
 </body>
-
 </html>
