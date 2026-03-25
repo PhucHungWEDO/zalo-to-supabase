@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zalo to Supabase</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 20px;
+            background: #f4f4f9;
+        }
+
+        textarea {
+            width: 100%;
+            height: 150px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            padding: 10px;
+            font-size: 16px;
+        }
+
+        button {
+            width: 100%;
+            padding: 15px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            margin-top: 10px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .status {
+            margin-top: 10px;
+            text-align: center;
+            color: #28a745;
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <h3>📥 Nạp dữ liệu Zalo</h3>
+    <textarea id="content" placeholder="Dán nội dung từ Zalo vào đây..."></textarea>
+    <button onclick="saveData()">LƯU VĨNH VIỄN</button>
+    <div id="status" class="status">Đã lưu thành công! ✅</div>
+
+    <script>
+        const _URL = "https://lcnjmtdccbvnqsitfvxs.supabase.co";
+        const _KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxjbmptdGRjY2J2bnFzaXRmdnhzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0MjkxMjIsImV4cCI6MjA5MDAwNTEyMn0.ygzImhpaSgS6T67th_jXDcf8bMaG6yNZnwll8JCPflE";
+        const supabase = supabase.createClient(_URL, _KEY);
+
+        async function saveData() {
+            const text = document.getElementById('content').value;
+            if (!text) return;
+
+            const { error } = await supabase.from('agent_logs').insert([{
+                project_name: "Zalo_Mobile_Inbox",
+                payload: { raw_content: text, source: "Mobile" }
+            }]);
+
+            if (!error) {
+                document.getElementById('status').style.display = 'block';
+                document.getElementById('content').value = '';
+                setTimeout(() => { document.getElementById('status').style.display = 'none'; }, 3000);
+            }
+        }
+    </script>
+</body>
+
+</html>
